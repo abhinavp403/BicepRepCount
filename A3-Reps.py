@@ -10,27 +10,33 @@ from matplotlib import style
 import numpy as np
 import scipy as sp
 from scipy.ndimage.interpolation import shift
+from scipy.signal import firwin, find_peaks, lfilter
+
 
 
 #Replace the string with your user ID
-user_id = "your-group-id-here"
+user_id = "aashish7k5"
 
 # <SOLUTION A1>
 # Define all variables used for the exercise detection algorithm
 previousMagnitude = -1000000
 previousPositive = False
 previousRepTimestamp = 0
+buffer = np.zeros(100)
+global timeup
+timeup = 0
+global countreps
+countreps = 0
 
 
 def onRepDetected(timestamp):
-    """
-    Notifies the client that a rep has been detected.
-    """
+
     global send_socket
     json_msg = ''
     json_msg = json.dumps({'user_id' : user_id, 'sensor_type' : 'SENSOR_SERVER_MESSAGE', 'message' : 'REP', 'data': timestamp}) + '\n'
     json_msg = json_msg.encode('utf-8')
     send_socket.send(json_msg)
+
 
 def detectReps(time,x_in,y_in,z_in):
     """
@@ -47,6 +53,40 @@ def detectReps(time,x_in,y_in,z_in):
     global previousRepTimestamp
     global smoothedvals
     global repindices
+    global magvals
+    global timeup
+    global buffer
+    global countreps
+    
+    buffer = shift(buffer, 1, cval = 0)
+    buffer[0] = time
+    timeup = timeup + 1
+    previousRepTimestamp = time
+    currmagnitude = y_in
+    magvals = shift(magvals, 1, cval = 0)
+    magvals[0] = currmagnitude
+    repindices = shift(repindices, 1, cval = 0)
+    if(timeup == 100):
+        timeup = 0
+        fp = find_peaks(magvals, distance = 10, height = 3)[0]
+        repindices = [0]*100
+        if(len(fp)>0): 
+            print(fp)
+            for i in range(len(fp)):
+                #print("REP_DETECTED at timestamp", buffer[fp[i]])
+                countreps = countreps + 1
+                print("Total number of reps = ", countreps)
+                onRepDetected(buffer[fp[i]])
+                repindices[fp[i]] = fp[i]
+                print(repindices)
+        else:
+            print("No reps detected")
+        
+    
+    
+    
+    
+    
     
 #Pseudo-code provided here:    
 #   if(rep_dected)
@@ -159,8 +199,8 @@ def recv_data():
 # Helper function that animates the canvas
 def animate(i):
     global tvals, xvals, yvals, zvals, magvals, repindices
-    
     rep_marker_locs = np.nonzero(repindices)
+    #print("Marker locations = ", len(rep_marker_locs[0]))
     rep_marker_locs = list(rep_marker_locs[0])
     
     try:
@@ -216,12 +256,12 @@ try:
     z = 0
     
     #numpy array buffers used for visualization
-    tvals = np.linspace(0,10,num=250)
-    xvals = np.zeros(250)
-    yvals = np.zeros(250)
-    zvals = np.zeros(250)
-    magvals = np.zeros(250)
-    repindices = np.zeros(250,dtype='int')
+    tvals = np.linspace(0,10,num=100)
+    xvals = np.zeros(100)
+    yvals = np.zeros(100)
+    zvals = np.zeros(100)
+    magvals = np.zeros(100)
+    repindices = np.zeros(100,dtype='int')
     
     socketThread = threading.Thread(target=recv_data, args=())
     socketThread.start()

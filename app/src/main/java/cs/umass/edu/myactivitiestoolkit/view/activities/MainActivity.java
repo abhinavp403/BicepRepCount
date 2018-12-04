@@ -84,7 +84,9 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public int getPageNumber() { return 1; }
+            public int getPageNumber() {
+                return 1;
+            }
         },
         AUDIO_DATA(AudioFragment.class) {
             @Override
@@ -147,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
          * Default is the enum name, e.g. "ABOUT". Override this to return a different title.
          * @return the page title displayed in the tab
          */
-        public String getTitle(){
+        public String getTitle() {
             return name();
         }
 
@@ -155,12 +157,12 @@ public class MainActivity extends AppCompatActivity {
          * Returns the fragment associated with the page
          * @return Fragment object, null if an instantiate error occurs.
          */
-        public Fragment getFragment(){
+        public Fragment getFragment() {
             try {
                 return fragment.newInstance();
             } catch (InstantiationException e) {
                 e.printStackTrace();
-            } catch(IllegalAccessException e) {
+            } catch (IllegalAccessException e) {
                 Log.d(TAG, "Cannot instantiate fragment. Constructor may be private.");
                 e.printStackTrace();
             }
@@ -172,15 +174,15 @@ public class MainActivity extends AppCompatActivity {
          * its position in the enum. Override this to specify a different page number.
          * @return the page number
          */
-        public int getPageNumber(){
+        public int getPageNumber() {
             return ordinal();
         }
 
         /**
          * Returns the number of pages available.
-         * @return the length of {@link #values()}
+         * @return the length of {@link values()}
          */
-        static int getCount(){
+        static int getCount() {
             return values().length;
         }
 
@@ -189,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
          * that will be displayed in the tab.
          * @param fragment class type that extends Fragment
          */
-        PAGES(Class<? extends Fragment> fragment){
+        PAGES(Class<? extends Fragment> fragment) {
             this.fragment = fragment;
         }
 
@@ -227,7 +229,7 @@ public class MainActivity extends AppCompatActivity {
         LocalBroadcastManager broadcastManager = LocalBroadcastManager.getInstance(this);
         try {
             broadcastManager.unregisterReceiver(receiver);
-        }catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException e) {
             e.printStackTrace();
         }
         super.onStop();
@@ -247,6 +249,7 @@ public class MainActivity extends AppCompatActivity {
         viewPager.setAdapter(new FragmentPagerAdapter(getFragmentManager()) {
             private final String[] tabTitles = new String[PAGES.getCount()];
             private final Fragment[] fragments = new Fragment[PAGES.getCount()];
+
             //instance initializer:
             {
                 for (PAGES page : PAGES.values()) {
@@ -280,14 +283,14 @@ public class MainActivity extends AppCompatActivity {
         // notification ID and can be used to set the proper tab.
         if (getIntent() != null) {
             int notificationID = getIntent().getIntExtra(Constants.KEY.NOTIFICATION_ID, Constants.NOTIFICATION_ID.ACCELEROMETER_SERVICE);
-            switch (notificationID){
+            switch (notificationID) {
                 case Constants.NOTIFICATION_ID.ACCELEROMETER_SERVICE:
                     viewPager.setCurrentItem(PAGES.MOTION_DATA.getPageNumber());
                     break;
                 case Constants.NOTIFICATION_ID.GYRO_SERVICE:
                     viewPager.setCurrentItem(PAGES.GYRO_DATA.getPageNumber());
                     break;
-                    case Constants.NOTIFICATION_ID.AUDIO_SERVICE:
+                case Constants.NOTIFICATION_ID.AUDIO_SERVICE:
                     viewPager.setCurrentItem(PAGES.AUDIO_DATA.getPageNumber());
                     break;
                 case Constants.NOTIFICATION_ID.LOCATION_SERVICE:
@@ -310,7 +313,7 @@ public class MainActivity extends AppCompatActivity {
      * Shows a removable status message at the bottom of the application.
      * @param message the status message shown
      */
-    public void showStatus(String message){
+    public void showStatus(String message) {
         txtStatus.setText(message);
     }
 
@@ -318,9 +321,9 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction() != null) {
-                if (intent.getAction().equals(Constants.ACTION.BROADCAST_MESSAGE)){
+                if (intent.getAction().equals(Constants.ACTION.BROADCAST_MESSAGE)) {
                     int message = intent.getIntExtra(Constants.KEY.MESSAGE, -1);
-                    switch (message){
+                    switch (message) {
                         case Constants.MESSAGE.ACCELEROMETER_SERVICE_STARTED:
                             showStatus(getString(R.string.accelerometer_started));
                             break;
@@ -358,7 +361,7 @@ public class MainActivity extends AppCompatActivity {
                             showStatus(getString(R.string.band_stopped));
                             break;
                     }
-                } else if (intent.getAction().equals(Constants.ACTION.BROADCAST_STATUS)){
+                } else if (intent.getAction().equals(Constants.ACTION.BROADCAST_STATUS)) {
                     String message = intent.getStringExtra(Constants.KEY.STATUS);
                     if (message != null) {
                         showStatus(message);
@@ -375,17 +378,27 @@ public class MainActivity extends AppCompatActivity {
      * nothing will occur. If the user has not yet granted the permission, the user will
      * be prompted to grant the permission.
      */
-    public void requestPhoneStatePermissions(){
+    public void requestPhoneStatePermissions() {
         String[] permissions = new String[]{Manifest.permission.READ_PHONE_STATE};
         if (!PermissionsUtil.hasPermissionsGranted(this, permissions)) {
             ActivityCompat.requestPermissions(this, permissions, PHONE_STATE_PERMISSION_REQUEST_CODE);
-        }else {
+        } else {
             onPermissionGranted();
         }
     }
 
-    private void onPermissionGranted(){
-        TelephonyManager phoneManager = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+    private void onPermissionGranted() {
+        TelephonyManager phoneManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
         IMEI = phoneManager.getDeviceId();
     }
 

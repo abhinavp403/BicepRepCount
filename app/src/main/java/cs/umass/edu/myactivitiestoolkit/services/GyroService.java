@@ -12,6 +12,8 @@ import android.widget.Toast;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Arrays;
+
 import cs.umass.edu.myactivitiestoolkit.R;
 import cs.umass.edu.myactivitiestoolkit.communication.MHLClientFilter;
 import cs.umass.edu.myactivitiestoolkit.processing.Filter;
@@ -148,13 +150,23 @@ public class GyroService extends SensorService implements SensorEventListener{
         //ToDo -- 1. Filter for Gyroscope events (replace false)
         //ToDo -- 2. Apply a filter to the data (processing -> Filter.java)
         //ToDo -- 3. call broadCastGyroReading to inform other app components (i.e. RepFragment) about the new sensor reading.
-        if (false) { //1. replace with filter for gyro data
+        if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) { //1. replace with filter for gyro data
             double[] filteredValues = {0,0,0};
             //2. smooth gyro data with a low pass filter
+            //filter = new Filter(event.values[0]);
+            //filter = new Filter(event.values[1]);
+            //filter = new Filter(event.values[2]);
+            filter = new Filter(10.5);
+            filteredValues = filter.getFilteredValues(event.values[0], event.values[1], event.values[2]);
+            //Log.d("FV Values", Arrays.toString(filteredValues));
+            /*Filter filter1= new Filter(event.values[0]);
+            Filter filter2= new Filter(filteredValues[1]);
+            Filter filter3= new Filter(filteredValues[2]);*/
             client.sendSensorReading(new GyroscopeReading(userID, "MOBILE", "", event.timestamp, (float)filteredValues[0], (float)filteredValues[1], (float)filteredValues[2]));
 
             float[] floatFilteredValues = new float[]{(float) filteredValues[0], (float) filteredValues[1], (float) filteredValues[2]};
             //3. call broadcastGyroReading to inform other app components of the new sensor readings
+            broadcastGyroReading(event.timestamp, floatFilteredValues);
         }else {
             Log.w(TAG, Constants.ERROR_MESSAGES.WARNING_SENSOR_NOT_SUPPORTED);
         }

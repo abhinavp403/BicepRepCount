@@ -133,8 +133,16 @@ public class RepFragment extends Fragment {
                     float[] gyroValues = intent.getFloatArrayExtra(Constants.KEY.GYRO_DATA);
 
                     //ToDo: 1. Add gyro data and timestamps to the graph using xValues, yValues, zValues, and timestamps
+                    xValues.add(gyroValues[0]);
+                    yValues.add(gyroValues[1]);
+                    zValues.add(gyroValues[2]);
+                    timestamps.add(timestamp);
+
                     if (numberOfPoints >= GRAPH_CAPACITY) {
                         timestamps.poll();
+                        xValues.poll();
+                        yValues.poll();
+                        zValues.poll();
                         while (peakTimestamps.size() > 0 && (peakTimestamps.peek().longValue() < timestamps.peek().longValue())){
                             peakTimestamps.poll();
                             peakValues.poll();
@@ -300,6 +308,7 @@ public class RepFragment extends Fragment {
             @Override
             public void run() {
                 //ToDo: Update the TextView txtGyroReading with the most recent angular velocity X,Y,Z data from the gyro
+                txtGyroReading.setText(String.format(Locale.getDefault(), getActivity().getString(R.string.gyro_reading_format_string), x, y, z));
             }
         });
     }
@@ -313,6 +322,7 @@ public class RepFragment extends Fragment {
             @Override
             public void run() {
                 //ToDo: update the TextView txtServerRepCount as your Python App detects subsequent exercise reps.
+                txtServerRepCount.setText(String.format(Locale.getDefault(), getString(R.string.android_step_count), repCount));
             }
         });
     }
@@ -335,6 +345,8 @@ public class RepFragment extends Fragment {
      * Updates and redraws the gyroscope plot, along with the peaks detected.
      */
     private void updatePlot(){
+        Log.d("TS", String.valueOf(timestamps.size()));
+        Log.d("zV", String.valueOf(zValues.size()));
         XYSeries xSeries = new SimpleXYSeries(new ArrayList<>(timestamps), new ArrayList<>(xValues), "X");
         XYSeries ySeries = new SimpleXYSeries(new ArrayList<>(timestamps), new ArrayList<>(yValues), "Y");
         XYSeries zSeries = new SimpleXYSeries(new ArrayList<>(timestamps), new ArrayList<>(zValues), "Z");
